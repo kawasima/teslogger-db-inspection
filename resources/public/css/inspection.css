@@ -1,0 +1,11 @@
+tr.inserted td {
+    background-color: #c8f7c5;
+}
+
+tr.deleted td {
+    background-color: #95a5a6;
+}
+
+td.updated {
+    background-color: #f1a9a0;
+}

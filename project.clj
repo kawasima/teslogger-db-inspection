@@ -7,8 +7,10 @@
                  [hiccup "1.0.5"]
                  [net.unit8.teslogger/comparator-ds "0.1.0-SNAPSHOT"]
 
-                 [org.clojure/clojurescript "0.0-2277"]
+                 [org.clojure/clojurescript "0.0-2311"]
+                 [org.clojure/core.async "0.1.338.0-5c5012-alpha"]
                  [om "0.7.1"]
+                 [prismatic/om-tools "0.3.2"]
                  [racehub/om-bootstrap "0.2.8"]]
   :plugins [[lein-ring "0.8.10"]
             [lein-cljsbuild "1.0.3"]]
@@ -23,4 +25,5 @@
               }
   :profiles
   {:dev {:dependencies [[javax.servlet/servlet-api "2.5"]
+                        [mysql/mysql-connector-java "5.1.32"]
                         [ring-mock "0.1.5"]]}})
