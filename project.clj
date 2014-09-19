@@ -9,9 +9,9 @@
 
                  [org.clojure/clojurescript "0.0-2311"]
                  [org.clojure/core.async "0.1.338.0-5c5012-alpha"]
-                 [om "0.7.1"]
-                 [prismatic/om-tools "0.3.2"]
-                 [racehub/om-bootstrap "0.2.8"]]
+                 [om "0.7.3"]
+                 [sablono "0.2.22"]
+                 [prismatic/om-tools "0.3.2"]]
   :plugins [[lein-ring "0.8.10"]
             [lein-cljsbuild "1.0.3"]]
   :source-paths ["src/clj"]

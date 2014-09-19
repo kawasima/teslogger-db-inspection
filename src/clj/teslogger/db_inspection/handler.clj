@@ -42,15 +42,13 @@
                (html5
                  [:head
                    (include-css "/css/bootstrap.min.css"
-                     "/css/bootstrap-select.min.css"
                      "/css/inspection.css")]
                  [:body
                    [:div.container
                      [:h3 "Teslogger Database Inspection"]
                      [:div#app]]
                  (include-js "http://fb.me/react-0.11.1.js"
-                             "/js/main.js"
-                             "/js/bootstrap-select.min.js")
+                             "/js/main.js")
                  (javascript-tag "goog.require('teslogger.db-inspection.core');")])))
 
 (defroutes app-routes
@@ -66,4 +64,4 @@
 (def app
   (-> app-routes
       (dev/wrap-trace :header :ui)
-      handler/site))
+      handler/api))

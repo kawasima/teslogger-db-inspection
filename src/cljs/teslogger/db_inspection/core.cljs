@@ -2,11 +2,7 @@
   (:require-macros [cljs.core.async.macros :refer [go]])
   (:require [om.core :as om :include-macros true]
             [om-tools.core :refer-macros [defcomponent]]
-            [om-tools.dom :as dom :include-macros true]
-            [om-bootstrap.random :as r]
-            [om-bootstrap.button :as b]
-            [om-bootstrap.panel :as p]
-            [om-bootstrap.table :refer [table]]
+            [sablono.core :as html :refer-macros [html]]
             [cljs.core.async :refer [put! <! chan]]
             [clojure.browser.net :as net]
             [goog.events :as events])
@@ -26,15 +22,22 @@
       (events/listen xhrio goog.net.EventType.SUCCESS
         (fn [e]
           (om/update! data :candidates (set (js->clj (.getResponseJson xhrio))) )))
-      (.send xhrio "http://localhost:3000/tables")))
+      (.send xhrio "/tables")))
   (render-state [_ {:keys [comm]}]
-    (dom/div {:class "form-group"}
-      (dom/select {:on-change #(om/set-state! owner :selected-candidate (.. % -target -value))
-                   :class "form-control"}
-        (dom/option nil "")
-        (map #(dom/option nil %) (:candidates data)))
-      (b/button {:bs-style "primary"
-                  :on-click #(put! comm [:add (om/get-state owner :selected-candidate)])} "Watch"))))
+    (html 
+      [:form.form-inline
+        [:div.form-group
+          [:select.form-control
+            {:on-change #(om/set-state! owner :selected-candidate (.. % -target -value))}
+            [:option ""]
+            (for [tname (:candidates data)]
+              [:option tname])]
+          [:button.btn.btn-primary
+            {:type "button"
+             :on-click (fn [e]
+                         (when-let [tname (om/get-state owner :selected-candidate)]
+                           (put! comm [:add tname])
+                           (om/set-state! owner :selected-canidate "")))} "Watch"]]])))
 
 (defn- take-snapshot [table-name owner]
   (let [xhrio (net/xhr-connection)]
@@ -52,32 +55,36 @@
             (take-snapshot table-name owner))))
     (put! (om/get-state owner :comm) [:add-ch (om/get-state owner :ch)]))
   (render-state [_ {:keys [records]}]
-    (table {:striped? false :bordered? true :condensed? true :hover? true}
-      (dom/thead
-        (dom/tr
-          (for [col (get records "headers")]
-            (dom/th col))))
-      (dom/tbody
-        (for [category ["add" "modify" "delete"]]
-          (for [row (get records category)]
-            (dom/tr (case category "add" {:class "inserted"} "delete" {:class "deleted"} {})
-              (for [val row]
-                (dom/td (when (vector? val) {:class "updated"})
-                  (if (vector? val)
-                    (str (first val) " => " (last val))
-                    val)))))))))
+    (html
+      [:table.table
+        [:thead
+          [:tr
+            (for [col (get records "headers")]
+              [:th col])]]
+        [:tbody
+          (for [category ["add" "modify" "delete"]]
+            (for [row (get records category)]
+              [:tr (case category "add" {:class "inserted"} "delete" {:class "deleted"} {})
+                (for [val row]
+                  [:td (when (vector? val) {:class "updated"})
+                    (if (vector? val)
+                      (str (first val) " => " (last val))
+                      val)])]))]]))
   (will-umount [_]
     (put! (om/get-state owner :comm) [:remove-ch (om/get-state owner :ch)])))
 
 (defcomponent watch-panel [table-name owner]
   (render-state [_ {:keys [comm]}]
-    (p/panel {:header (dom/span table-name
-                        (dom/button {:type "button"
-                                     :class "close"
-                                     :on-click #(put! comm [:delete table-name])}
-                          (dom/span {:aria-hidden "true"} "×"))) }
-      (om/build watch-table table-name
-        {:init-state {:comm comm}}))))
+    (html
+      [:div.panel.panel-info
+        [:div.panel-heading
+          [:span table-name
+            [:button.close {:type "button"
+                            :on-click #(put! comm [:delete table-name])}
+              [:span {:aria-hidden "true"} "×"]]]]
+        [:div.panel-body
+          (om/build watch-table table-name
+            {:init-state {:comm comm}})]])))
 
 (defn add-watch-panel [app table]
   (om/transact! app :watches #(conj % table))
@@ -102,18 +109,18 @@
             (let [[type value] (<! comm)]
               (handle-event type data value))))))
   (render-state [_ {:keys [comm] :as state}]
-    (dom/div {:class "row"}
-      (dom/div {:class "col-md-6"}
-        (om/build tables-widget data
-          {:init-state {:comm comm}}))
-      (dom/div {:class "col-md-6"}
-        (dom/div {:class "pull-right"}
-          (dom/button {:type "button"
-                       :class "btn btn-success btn-lg"
-                       :on-click #(doseq [ch (:snapshot-ch @data)] (put! ch :refresh))} "Snapshot!")))
-      (dom/div {:class "col-md-12"}
-        (om/build-all watch-panel watches
-          {:init-state {:comm comm}})))))
+    (html
+      [:div.row
+        [:div.col-md-6
+          (om/build tables-widget data
+            {:init-state {:comm comm}})]
+        [:div.col-md-6
+          [:div.pull-right
+            [:button.btn.btn-success.btn-lg {:type "button"
+                                             :on-click #(doseq [ch (:snapshot-ch @data)] (put! ch :refresh))} "Snapshot!"]]]
+        [:div.col-md-12
+          (om/build-all watch-panel watches
+          {:init-state {:comm comm}})]])))
     
  
 (om/root main-app app-state
