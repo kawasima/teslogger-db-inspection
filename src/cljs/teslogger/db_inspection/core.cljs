@@ -17,13 +17,15 @@
          :snapshot-ch #{}}))
 
 (defcomponent tables-widget [data owner]
+  (init-state [_]
+    {:selected-candidate ""})
   (will-mount [_]
     (let [xhrio (net/xhr-connection)]
       (events/listen xhrio goog.net.EventType.SUCCESS
         (fn [e]
           (om/update! data :candidates (set (js->clj (.getResponseJson xhrio))) )))
       (.send xhrio "/tables")))
-  (render-state [_ {:keys [comm]}]
+  (render-state [_ {:keys [comm selected-candidate]}]
     (html 
       [:form.form-inline
         [:div.form-group
@@ -31,20 +33,20 @@
             {:on-change #(om/set-state! owner :selected-candidate (.. % -target -value))}
             [:option ""]
             (for [tname (:candidates data)]
-              [:option tname])]
+              [:option (merge {} (when (= selected-candidate tname) {:selected "selected"})) tname])]
           [:button.btn.btn-primary
             {:type "button"
              :on-click (fn [e]
-                         (when-let [tname (om/get-state owner :selected-candidate)]
+                         (when-let [tname (not-empty (om/get-state owner :selected-candidate))]
                            (put! comm [:add tname])
-                           (om/set-state! owner :selected-canidate "")))} "Watch"]]])))
+                           (om/set-state! owner :selected-candidate "")))} "Watch"]]])))
 
 (defn- take-snapshot [table-name owner]
   (let [xhrio (net/xhr-connection)]
     (events/listen xhrio goog.net.EventType.SUCCESS
         (fn [e]
           (om/set-state! owner :records (js->clj (.getResponseJson xhrio)) )))
-      (.send xhrio (str "http://localhost:3000/snapshot/" table-name) "post")))
+      (.send xhrio (str "/snapshot/" table-name) "post")))
 
 (defcomponent watch-table [table-name owner]
   (init-state [_]
@@ -70,7 +72,7 @@
                     (if (vector? val)
                       (str (first val) " => " (last val))
                       val)])]))]]))
-  (will-umount [_]
+  (will-unmount [_]
     (put! (om/get-state owner :comm) [:remove-ch (om/get-state owner :ch)])))
 
 (defcomponent watch-panel [table-name owner]

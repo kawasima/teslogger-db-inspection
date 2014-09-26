@@ -2,7 +2,8 @@
   (:use [compojure.core]
         [liberator.core :only [defresource request-method-in]]
         [liberator.representation :only [Representation]]
-        [hiccup core page element])
+        [hiccup core page element]
+        [environ.core :only [env]])
   (:require [compojure.handler :as handler]
             [compojure.route :as route]
             [liberator.dev :as dev])
@@ -12,11 +13,13 @@
            [org.apache.commons.dbcp2 BasicDataSourceFactory]))
 
 
-(let [props (Properties.)]
-  (.setProperty props "url" "jdbc:mysql://localhost/teslogger?user=root&password=root")
-  (def snapshoter (TableSnapshot.
-                    (BasicDataSourceFactory/createDataSource props)
-                    "jdbc:h2:file:./target/compare")))
+(defn init []
+  (let [props (Properties.)]
+    (.setProperty props "url" (or (env :teslogger-db-url)
+                                "jdbc:mysql://localhost/teslogger?user=root&password=root"))
+    (def snapshoter (TableSnapshot.
+                      (BasicDataSourceFactory/createDataSource props)
+                      "jdbc:h2:file:./target/compare"))))
 
 (defresource tables
   :available-media-types ["application/json"]
@@ -47,9 +50,9 @@
                    [:div.container
                      [:h3 "Teslogger Database Inspection"]
                      [:div#app]]
-                 (include-js "http://fb.me/react-0.11.1.js"
-                             "/js/main.js")
-                 (javascript-tag "goog.require('teslogger.db-inspection.core');")])))
+                 (include-js "http://fb.me/react-0.11.2.js"
+                             "/js/main.min.js")
+                 #_(javascript-tag "goog.require('teslogger.db-inspection.core');")])))
 
 (defroutes app-routes
   (GET "/" [] index)
