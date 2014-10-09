@@ -1,3 +1,18 @@
+#panel-container {
+    font-size: xx-small;
+    width: auto;
+}
+
+#panel-container th {
+    max-width: 15em;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+
+#panel-container td {
+    max-width: 15em;
+    word-wrap:break-word;
+}
 tr.inserted td {
     background-color: #c8f7c5;
 }

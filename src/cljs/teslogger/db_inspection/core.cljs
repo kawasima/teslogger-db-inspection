@@ -64,11 +64,11 @@
 
   (render-state [_ {:keys [records]}]
     (html
-      [:table.table
+      [:table.table.table-condensed.table-bordered
         [:thead
           [:tr
             (for [col (get records "headers")]
-              [:th col])]]
+              [:th {:title col} col])]]
         [:tbody
           (for [category ["add" "modify" "delete"]]
             (for [row (get records category)]

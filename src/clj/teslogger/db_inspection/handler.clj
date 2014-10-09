@@ -91,11 +91,11 @@
                                 "/css/inspection.css")]
                   [:body
                    [:div.container
-                    [:h3 "Teslogger Database Inspection !!"]
+                    [:h3 "Teslogger Database Inspection"]
                     [:div#app]]
                    (include-js "http://fb.me/react-0.11.2.js"
                                "/js/html2canvas.js"
-                               "/js/main.js")
+                               "/js/main.min.js")
                    #_(javascript-tag "goog.require('teslogger.db-inspection.core');")]))))
 
 (defn case-id []
