@@ -32,7 +32,7 @@
           [:select.form-control
             {:on-change #(om/set-state! owner :selected-candidate (.. % -target -value))}
             [:option ""]
-            (for [tname (:candidates data)]
+            (for [tname (sort (:candidates data))]
               [:option (merge {} (when (= selected-candidate tname) {:selected "selected"})) tname])]
           [:button.btn.btn-primary
             {:type "button"
