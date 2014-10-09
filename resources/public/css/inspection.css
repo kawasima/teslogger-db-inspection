@@ -1,6 +1,10 @@
 #panel-container {
-    font-size: xx-small;
+    min-width: 100%;
     width: auto;
+}
+
+#panel-container table {
+    font-size: xx-small;
 }
 
 #panel-container th {
