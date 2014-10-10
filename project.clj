@@ -9,7 +9,7 @@
                  [liberator "0.12.1"]
                  [org.clojure/java.jdbc "0.3.5"]
                  [hiccup "1.0.5"]
-                 [net.unit8.teslogger/comparator-ds "0.1.0"]
+                 [net.unit8.teslogger/comparator-ds "0.1.1"]
                  [net.unit8/ulon-colon "0.2.0"]
 
                  [org.clojure/clojurescript "0.0-2311"]

@@ -32,6 +32,9 @@
                       (BasicDataSourceFactory/createDataSource props)
                       "jdbc:h2:file:./target/compare"))))
 
+(defn destroy []
+  (.dispose snapshoter))
+
 (defn body-as-string [ctx]
   (if-let [body (get-in ctx [:request :body])]
     (condp instance? body
@@ -88,12 +91,13 @@
                  (html5
                   [:head
                    (include-css "/css/bootstrap.min.css"
+                                "/css/font-awesome.min.css"
                                 "/css/inspection.css")]
                   [:body
                    [:div.container
                     [:h3 "Teslogger Database Inspection"]
                     [:div#app]]
-                   (include-js "http://fb.me/react-0.11.2.js"
+                   (include-js "/js/react-0.11.2.js"
                                "/js/html2canvas.js"
                                "/js/main.min.js")
                    #_(javascript-tag "goog.require('teslogger.db-inspection.core');")]))))

@@ -144,8 +144,8 @@
             [:button.btn.btn-success.btn-lg {:type "button"
                                              :on-click #(apply take-snapshot pub-ch (seq watches))}
              (if (om/get-state owner :auto-mode)
-               [:span.glyphicon.glyphicon-screenshot "auto"]
-               [:span.glyphicon.glyphicon-camera "snapshot"])]]]
+               [:span [:i.fa.fa] "auto"]
+               [:span [:i.fa.fa-camera-camera] "snapshot"])]]]
         [:div#panel-container.col-md-12
           (om/build-all watch-panel watches
           {:init-state {:comm comm :sub-ch sub-ch :pub-ch pub-ch}})]])))
