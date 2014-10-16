@@ -142,10 +142,13 @@
         [:div.col-md-6
           [:div.pull-right
             [:button.btn.btn-success.btn-lg {:type "button"
-                                             :on-click #(apply take-snapshot pub-ch (seq watches))}
+                                             :on-click (fn [e]
+                                                         (if (om/get-state owner :auto-mode)
+                                                           (om/set-state! owner :auto-mode false)
+                                                           (apply take-snapshot pub-ch (seq watches))))}
              (if (om/get-state owner :auto-mode)
-               [:span [:i.fa.fa] "auto"]
-               [:span [:i.fa.fa-camera-camera] "snapshot"])]]]
+               [:span [:i.fa.fa-camera] "auto"]
+               [:span [:i.fa.fa-camera-retro] "snapshot"])]]]
         [:div#panel-container.col-md-12
           (om/build-all watch-panel watches
           {:init-state {:comm comm :sub-ch sub-ch :pub-ch pub-ch}})]])))

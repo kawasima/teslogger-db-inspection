@@ -30,7 +30,7 @@
     (.setProperty props "url" @db-url)
     (def snapshoter (TableSnapshot.
                       (BasicDataSourceFactory/createDataSource props)
-                      "jdbc:h2:file:./target/compare"))))
+                      "jdbc:h2:./target/compare;AUTO_SERVER=TRUE"))))
 
 (defn destroy []
   (.dispose snapshoter))

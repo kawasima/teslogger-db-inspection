@@ -34,35 +34,34 @@
   (let [conn (j/get-connection @oracle-db)
         ch (chan)]
     (when-not @producer
-      (reset! producer (start-producer :port (or (env :auto-snapshot-port) 56297))))
+      (reset! producer (start-producer :port (or (env :auto-snapshot-port) 56297)))
+      (let [stmt (.prepareCall conn "{call DBMS_ALERT.REGISTER(?)}")]
+        (doto stmt
+          (.setString 1 "EXEC_DML")
+          (.executeUpdate)
+          (.close)))
+      (let [stmt (.prepareCall conn "{call DBMS_ALERT.WAITANY(?,?,?,?)}")]
+        (doto stmt
+          (.registerOutParameter 1 Types/VARCHAR)
+          (.registerOutParameter 2 Types/VARCHAR)
+          (.registerOutParameter 3 Types/INTEGER)
+          (.setInt 4 300))
 
-    (let [stmt (.prepareCall conn "{call DBMS_ALERT.REGISTER(?)}")]
-      (doto stmt
-        (.setString 1 "EXEC_DML")
-        (.executeUpdate)
-        (.close)))
-    (let [stmt (.prepareCall conn "{call DBMS_ALERT.WAITANY(?,?,?,?)}")]
-      (doto stmt
-        (.registerOutParameter 1 Types/VARCHAR)
-        (.registerOutParameter 2 Types/VARCHAR)
-        (.registerOutParameter 3 Types/INTEGER)
-        (.setInt 4 300))
-
-      (go-loop []
-        (.commit conn)
-        (.executeUpdate stmt)
-        (when (= 0 (.getInt stmt 3))
-          (let [msg (.getString stmt 2)]
-            (loop [diff {} tables @auto-watching-tables]
-              (if (empty? tables)
-                (produce {:json (json/write-str diff)})
-                (let [table-name (first tables)]
-                  (.take snapshoter table-name)
-                  (recur
-                   (assoc diff table-name
-                          (dissoc (bean (.diffFromPrevious snapshoter table-name)) :class))
-                   (rest tables)))))))
-        (recur)))))
+        (go-loop []
+          (.commit conn)
+          (.executeUpdate stmt)
+          (when (= 0 (.getInt stmt 3))
+            (let [msg (.getString stmt 2)]
+              (loop [diff {} tables @auto-watching-tables]
+                (if (empty? tables)
+                  (produce {:json (json/write-str diff)})
+                  (let [table-name (first tables)]
+                    (.take snapshoter table-name)
+                    (recur
+                     (assoc diff table-name
+                            (dissoc (bean (.diffFromPrevious snapshoter table-name)) :class))
+                     (rest tables)))))))
+          (recur))))))    
 
 (defn stop []
   )
