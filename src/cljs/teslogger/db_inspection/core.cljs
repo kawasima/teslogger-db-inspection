@@ -57,8 +57,9 @@
           sub-ch (om/get-state owner :sub-ch)]
       (sub sub-ch table-name cx)
       (go-loop []
-        (let [{:keys [records]} (<! cx)]
+        (let [{:keys [records update-ch]} (<! cx)]
           (om/set-state! owner :records records)
+          (om/set-state! owner :update-ch update-ch)
           (recur))))
     (take-snapshot (om/get-state owner :pub-ch) table-name))
 
@@ -78,6 +79,11 @@
                     (if (vector? val)
                       (str (first val) " => " (last val))
                       val)])]))]]))
+
+  (did-update [_ _ _]
+    (when-let [ch (om/get-state owner :update-ch)]
+      (put! ch "did update.")))
+
   (will-unmount [_]
     (unsub-all (om/get-state owner :sub-ch) table-name)))
 
@@ -133,25 +139,44 @@
           (om/set-state! owner :auto-mode true)
           (start-autosnapshot (om/get-state owner :pub-ch))))
       (.send xhrio "auto" "post")))
+
   (render-state [_ {:keys [comm sub-ch pub-ch] :as state}]
     (html
+     [:div
       [:div.row
-        [:div.col-md-6
-          (om/build tables-widget data
-            {:init-state {:comm comm}})]
-        [:div.col-md-6
-          [:div.pull-right
-            [:button.btn.btn-success.btn-lg {:type "button"
-                                             :on-click (fn [e]
-                                                         (if (om/get-state owner :auto-mode)
-                                                           (om/set-state! owner :auto-mode false)
-                                                           (apply take-snapshot pub-ch (seq watches))))}
-             (if (om/get-state owner :auto-mode)
-               [:span [:i.fa.fa-camera] "auto"]
-               [:span [:i.fa.fa-camera-retro] "snapshot"])]]]
-        [:div#panel-container.col-md-12
-          (om/build-all watch-panel watches
-          {:init-state {:comm comm :sub-ch sub-ch :pub-ch pub-ch}})]])))
+       [:div.col-md-6.col-sm-6
+        (om/build tables-widget data
+                  {:init-state {:comm comm}})]
+       [:div.col-md-6.col-sm-6pull-right
+        [:span.pull-right
+         [:button.btn.btn-success.btn-lg {:type "button"
+                                          :on-click (fn [e]
+                                                      (if (om/get-state owner :auto-mode)
+                                                        (om/set-state! owner :auto-mode false)
+                                                        (apply take-snapshot pub-ch (seq watches))))}
+          (if (om/get-state owner :auto-mode)
+            [:span [:i.fa.fa-camera] "auto"]
+            [:span [:i.fa.fa-camera-retro] "snapshot"])]]]]
+      [:div.row
+       [:div#panel-container.col-md-12
+        (om/build-all watch-panel watches
+                      {:init-state {:comm comm :sub-ch sub-ch :pub-ch pub-ch}})]]])))
+
+(defn- clear-history []
+  (let [xhrio (net/xhr-connection)]
+    (.send xhrio "snapshot" "delete")))
+
+(defcomponent menu-app [app owner]
+  (render [_]
+    (html
+     [:ul.nav.navbar-nav.navbar-right
+      [:li
+       [:form.navbar-form
+        [:button#clear-history.btn.btn-danger {:on-click (fn [e] (clear-history) false)}
+         [:span.fa.fa-trash-o]]]]])))
+
+(om/root menu-app {}
+         {:target (.getElementById js/document "menu")})
     
 (om/root main-app app-state
   {:target (.getElementById js/document "app")})

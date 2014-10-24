@@ -1,5 +1,5 @@
 (ns teslogger.db-inspection.handler
-  (:use [compojure.core :only [defroutes GET POST DELETE]]
+  (:use [compojure.core :only [defroutes GET POST DELETE ANY]]
         [liberator.core :only [defresource request-method-in]]
         [liberator.representation :only [Representation]]
         (hiccup core page element
@@ -26,7 +26,7 @@
   (let [props (Properties.)]
     (reset! db-url
             (or (env :teslogger-db-url)
-                "jdbc:mysql://localhost/teslogger?user=root&password=root"))
+                "jdbc:mysql://localhost/teslogger?user=root&password=root&autocommit=false"))
     (.setProperty props "url" @db-url)
     (def snapshoter (TableSnapshot.
                       (BasicDataSourceFactory/createDataSource props)
@@ -57,11 +57,12 @@
   :allowed-methods [:get]
   :handle-ok (fn [context] (seq (.listCandidate snapshoter))))
 
-(defresource snapshot [table-name]
+(defresource snapshot
   :available-media-types ["application/json"]
-  :allowed-methods [:post]
+  :allowed-methods [:post :delete]
   :malformed? #(parse-edn % ::data)
   :post! (fn [ctx] (.take snapshoter (into-array (::data ctx))))
+  :delete (fn [_] (.clear snapshoter))
   :post-redirect? false
   :handle-created (fn [ctx]
                     (->> (::data ctx)
@@ -94,13 +95,16 @@
                                 "/css/font-awesome.min.css"
                                 "/css/inspection.css")]
                   [:body
+                   [:nav.navbar.navbar-default.navbar-fixed-top
+                    [:div.container-fluid
+                     [:div.navbar-header
+                      [:a.navbar-brand "Teslogger Database Inspection"]]
+                     [:div#menu.collapse.navbar-collapse]]]
                    [:div.container
-                    [:h3 "Teslogger Database Inspection"]
                     [:div#app]]
                    (include-js "/js/react-0.11.2.js"
                                "/js/html2canvas.js"
-                               "/js/main.min.js")
-                   #_(javascript-tag "goog.require('teslogger.db-inspection.core');")]))))
+                               "/js/main.min.js")]))))
 
 (defn case-id []
   (try
@@ -112,7 +116,7 @@
 (defroutes app-routes
   (GET "/" [] index)
   (GET "/tables" [] tables)
-  (POST "/snapshot" [] snapshot)
+  (ANY "/snapshot" [] snapshot)
   (GET "/diff/:table_name" [table-name]
     (diff table-name))
   (POST "/watch-tables" [] watch-tables)

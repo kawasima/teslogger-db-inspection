@@ -27,13 +27,13 @@
   (let [consumer (make-consumer "ws://localhost:56297")]
     (consume consumer
              (fn [msg]
-               (doseq [[table-name diff] (js->clj (json/parse (:json msg)))]
-                 (put! pub-ch {:table table-name :records diff}))
-               (let [interval (atom 0)]
-                 (reset! interval
-                         (js/setInterval
-                          #(when-not (om/rendering?)
-                             (take-screenshot)
-                             (js/clearInterval @interval))
-                          500)))))
+               (let [ch (chan)
+                     diffs (js->clj (json/parse (:json msg)))]
+                 (doseq [[table-name diff] diffs]
+                   (put! pub-ch {:table table-name :records diff :update-ch ch}))
+                 (go-loop [i 1]
+                   (<! ch)
+                   (if (< i (count diffs))
+                     (recur (inc i))
+                     (take-screenshot))))))
     consumer))
