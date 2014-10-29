@@ -7,19 +7,29 @@
   (:use [ulon-colon.producer]
         [environ.core]
         [clojure.core.async :only [go-loop chan]])
-  (:import [java.sql Types]))
+  (:import [java.sql Types]
+           [java.security MessageDigest]))
 
 (def oracle-db (atom nil))
 
 (def auto-watching-tables (atom nil))
 (def producer (atom nil))
 
+(defn name-hash [data]
+  (let [digest (.digest (MessageDigest/getInstance "sha1") (.getBytes data))]
+    (-> (apply str
+              (map #(.substring
+                     (Integer/toString
+                      (+ (bit-and % 0xff) 0x100) 16) 1)
+                   digest))
+        (.substring 0 20))))
+
 (defn create-triggers []
   (j/with-db-metadata [md @oracle-db]
     (doseq [table-name @auto-watching-tables]
       (j/db-do-commands @oracle-db
-        (str "CREATE OR REPLACE TRIGGER " table-name
-          "_dml_event AFTER INSERT OR UPDATE OR DELETE ON " table-name " FOR EACH ROW\n"
+        (str "CREATE OR REPLACE TRIGGER dml_event_" (name-hash table-name)
+          " AFTER INSERT OR UPDATE OR DELETE ON " table-name " FOR EACH ROW\n"
           "BEGIN\n"
           "DBMS_ALERT.SIGNAL('EXEC_DML', systimestamp);\n"
           "END;")))))

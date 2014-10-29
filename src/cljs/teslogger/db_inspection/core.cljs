@@ -44,12 +44,12 @@
 (defn- take-snapshot [ch & table-names]
   (let [xhrio (net/xhr-connection)]
     (events/listen xhrio goog.net.EventType.SUCCESS
-        (fn [e]
-          (doseq [[table-name diff] (js->clj (.getResponseJson xhrio))]
-            (put! ch {:table table-name :records diff}))))
-      (.send xhrio (str "snapshot") "post"
-             (pr-str table-names)
-             (clj->js {:content-type "application/edn"}))))
+                   (fn [e]
+                     (doseq [[table-name diff] (js->clj (.getResponseJson xhrio))]
+                       (put! ch {:table table-name :records diff}))))
+    (.send xhrio (str "snapshot") "post"
+           (pr-str table-names)
+           (clj->js {:content-type "application/edn"}))))
 
 (defcomponent watch-table [table-name owner]
   (will-mount [_]
@@ -100,26 +100,32 @@
           (om/build watch-table table-name
             {:init-state {:sub-ch sub-ch :pub-ch pub-ch}})]])))
 
-(defn- send-watching-tables [tables]
+(defn- send-watching-tables [owner tables]
   (let [xhrio (net/xhr-connection)]
+    (events/listen xhrio goog.net.EventType.ERROR
+                   (fn [e]
+                     (js/console.error "Can't `create trigger` for auto mode.")
+                     (om/set-state! owner :auto-mode false)))
     (.send xhrio (str "watch-tables" tables) "post"
            (pr-str tables)
            (clj->js {:content-type "application/edn"}))))
 
-(defn add-watch-panel [app table]
+(defn add-watch-panel [app owner table]
   (om/transact! app :watches #(conj % table))
   (om/transact! app :candidates #(disj % table))
-  (send-watching-tables (:watches @app)))
+  (when (om/get-state owner :auto-mode)
+    (send-watching-tables owner (:watches @app))))
 
-(defn delete-watch-panel [app table]
+(defn delete-watch-panel [app owner table]
   (om/transact! app :watches #(disj % table))
   (om/transact! app :candidates #(conj % table))
-  (send-watching-tables (:watches @app)))
+  (when (om/get-state owner :auto-mode)
+    (send-watching-tables owner (:watches @app))))
 
-(defn handle-event [type app val]
+(defn handle-event [type app owner val]
   (case type
-    :add (add-watch-panel app val)
-    :delete (delete-watch-panel app val)))
+    :add (add-watch-panel app owner val)
+    :delete (delete-watch-panel app owner val)))
 
 (defcomponent main-app [{:keys [watches] :as data} owner]
   (init-state [_]
@@ -132,7 +138,7 @@
   (will-mount [_]
     (go (while true
           (let [[type value] (<! (om/get-state owner :comm))]
-            (handle-event type data value))))
+            (handle-event type data owner value))))
     (let [xhrio (net/xhr-connection)]
       (events/listen xhrio goog.net.EventType.SUCCESS
         (fn [e]

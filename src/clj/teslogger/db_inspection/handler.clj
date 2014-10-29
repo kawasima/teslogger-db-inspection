@@ -83,7 +83,7 @@
   :post! (fn [req]
            (reset! auto/auto-watching-tables (::data req))
            (auto/create-triggers))
-  :hanlhdle-exception #(.printStackTrace (:exception %)))
+  :handle-exception #(.printStackTrace (:exception %)))
 
 (defresource index
   :available-media-types ["text/html"]

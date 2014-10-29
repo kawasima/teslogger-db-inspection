@@ -1,4 +1,4 @@
-(defproject net.unit8.teslogger/teslogger-db-inspection "0.1.2"
+(defproject net.unit8.teslogger/teslogger-db-inspection "0.1.3"
   :description "The tool for viewing the difference of data."
   :url "http://github.com/kawasima/teslogger-db-inspection"
   :dependencies [[org.clojure/clojure "1.6.0"]
