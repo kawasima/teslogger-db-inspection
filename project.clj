@@ -1,4 +1,4 @@
-(defproject net.unit8.teslogger/teslogger-db-inspection "0.1.4"
+(defproject net.unit8.teslogger/teslogger-db-inspection "0.1.5"
   :description "The tool for viewing the difference of data."
   :url "http://github.com/kawasima/teslogger-db-inspection"
   :dependencies [[org.clojure/clojure "1.6.0"]
@@ -9,7 +9,7 @@
                  [liberator "0.12.1"]
                  [org.clojure/java.jdbc "0.3.5"]
                  [hiccup "1.0.5"]
-                 [net.unit8.teslogger/comparator-ds "0.1.4"]
+                 [net.unit8.teslogger/comparator-ds "0.1.5"]
                  [net.unit8/ulon-colon "0.2.1"]
 
                  [org.clojure/clojurescript "0.0-2311"]
