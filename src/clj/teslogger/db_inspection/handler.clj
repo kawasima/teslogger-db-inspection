@@ -20,7 +20,7 @@
            [org.apache.commons.dbcp2 BasicDataSourceFactory]))
 
 
-(def db-url (atom nil))
+(defonce db-url (atom nil))
 
 (defn init []
   (let [props (Properties.)]
@@ -55,7 +55,8 @@
 (defresource tables
   :available-media-types ["application/json"]
   :allowed-methods [:get]
-  :handle-ok (fn [context] (seq (.listCandidate snapshoter))))
+  :handle-ok (fn [context]
+               (vec (.listCandidate snapshoter))))
 
 (defresource snapshot
   :available-media-types ["application/json"]
@@ -91,8 +92,8 @@
                (with-base-url (get-in context [:request :context] "")
                  (html5
                   [:head
-                   (include-css "/css/bootstrap.min.css"
-                                "/css/font-awesome.min.css"
+                   (include-css "//cdn.jsdelivr.net/bootstrap/3.3.5/css/bootstrap.min.css"
+                                "//cdn.jsdelivr.net/fontawesome/4.4.0/css/font-awesome.min.css"
                                 "/css/inspection.css")]
                   [:body
                    [:nav.navbar.navbar-default.navbar-fixed-top
@@ -102,8 +103,7 @@
                      [:div#menu.collapse.navbar-collapse]]]
                    [:div.container
                     [:div#app]]
-                   (include-js "/js/react-0.11.2.js"
-                               "/js/html2canvas.js"
+                   (include-js "/js/html2canvas.js"
                                "/js/main.min.js")]))))
 
 (defn case-id []
@@ -135,8 +135,7 @@
     (try
       (auto/start @db-url snapshoter)
       "ok"
-      (catch Exception ex
-        (.printStackTrace ex)
+      (catch IllegalArgumentException ex
         {:status 400 :body "ng"})))
   (DELETE "/auto" []
     (auto/stop)

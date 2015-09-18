@@ -5,8 +5,8 @@
             [sablono.core :as html :refer-macros [html]]
             [cljs.core.async :refer [put! <! chan pub sub unsub-all]]
             [clojure.browser.net :as net]
-            [goog.events :as events])
-  (:use [teslogger.db-inspection.auto :only [start-autosnapshot]])
+            [goog.events :as events]
+            [teslogger.db-inspection.auto :refer [start-autosnapshot]])
   (:import [goog.net.EventType]
            [goog.events EventType]))
 
@@ -130,7 +130,6 @@
 (defcomponent main-app [{:keys [watches] :as data} owner]
   (init-state [_]
     (let [pub-ch (chan)]
-      
       {:comm (chan)
        :pub-ch pub-ch
        :sub-ch (pub pub-ch :table)
@@ -146,7 +145,7 @@
           (start-autosnapshot (om/get-state owner :pub-ch))))
       (.send xhrio "auto" "post")))
 
-  (render-state [_ {:keys [comm sub-ch pub-ch] :as state}]
+  (render-state [_ {:keys [auto-mode comm sub-ch pub-ch] :as state}]
     (html
      [:div
       [:div.row
@@ -160,7 +159,7 @@
                                                       (if (om/get-state owner :auto-mode)
                                                         (om/set-state! owner :auto-mode false)
                                                         (apply take-snapshot pub-ch (seq watches))))}
-          (if (om/get-state owner :auto-mode)
+          (if auto-mode
             [:span [:i.fa.fa-camera] "auto"]
             [:span [:i.fa.fa-camera-retro] "snapshot"])]]]]
       [:div.row
